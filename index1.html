@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختبار إدارة الفعاليات — عبدالعزيز الفهد</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f0f4f8;color:#1a202c;font-size:15px;line-height:1.8;}
+.header{background:linear-gradient(135deg,#1a5276,#2e86ab);color:white;padding:30px 40px;text-align:center;}
+.header h1{font-size:24px;margin-bottom:6px;}
+.header p{font-size:13px;opacity:.8;}
+.header .student{margin-top:10px;background:rgba(255,255,255,.15);display:inline-block;padding:5px 20px;border-radius:20px;font-size:14px;}
+.tabs{background:#154360;display:flex;justify-content:center;gap:0;border-bottom:3px solid #2e86ab;}
+.tab{color:rgba(255,255,255,.7);padding:12px 24px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .2s;white-space:nowrap;}
+.tab.active{color:white;border-bottom-color:#f0d870;}
+.tab:hover{color:white;background:rgba(255,255,255,.08);}
+.progress-bar{background:#d0e2f7;height:5px;}
+.progress-fill{background:linear-gradient(90deg,#2e86ab,#27ae60);height:5px;transition:width .4s;}
+.container{max-width:820px;margin:0 auto;padding:20px 16px;}
+.quiz-section{display:none;}
+.quiz-section.active{display:block;}
+
+/* SCORE BAR */
+.score-bar{background:white;border-radius:12px;padding:14px 20px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.score-num{font-size:26px;font-weight:700;color:#1a5276;}
+.score-label{font-size:12px;color:#666;}
+.score-badge{background:#1a5276;color:white;padding:5px 14px;border-radius:16px;font-size:13px;font-weight:600;}
+
+/* QUESTION CARD */
+.q-card{background:white;border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-right:5px solid #2e86ab;transition:border-color .3s;}
+.q-card.correct{border-right-color:#27ae60;}
+.q-card.wrong{border-right-color:#e74c3c;}
+.q-num{font-size:11px;color:#2e86ab;font-weight:700;margin-bottom:5px;}
+.q-text{font-size:15px;font-weight:600;color:#1a202c;margin-bottom:14px;line-height:1.7;}
+
+/* TF */
+.tf-btns{display:flex;gap:10px;}
+.tf-btn{flex:1;padding:10px;border:2px solid #d0e2f7;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;transition:all .2s;}
+.tf-btn.t{background:#f0fdf4;color:#27ae60;border-color:#a9dfcc;}
+.tf-btn.f{background:#fdf2f2;color:#e74c3c;border-color:#f5b7b1;}
+.tf-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,0,0,.1);}
+.tf-btn.sel-correct{background:#27ae60!important;color:white!important;border-color:#27ae60!important;}
+.tf-btn.sel-wrong{background:#e74c3c!important;color:white!important;border-color:#e74c3c!important;}
+.tf-btn.reveal{background:#27ae60!important;color:white!important;border-color:#27ae60!important;opacity:.7;}
+.tf-btn:disabled{cursor:default;transform:none;}
+
+/* MCQ */
+.options{display:flex;flex-direction:column;gap:7px;}
+.opt-btn{background:#f8faff;border:2px solid #d0e2f7;border-radius:8px;padding:10px 14px;text-align:right;cursor:pointer;font-size:14px;font-family:inherit;color:#1a202c;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.opt-btn:hover:not(:disabled){background:#e8f0fb;border-color:#2e86ab;}
+.opt-label{background:#1a5276;color:white;min-width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.opt-btn.correct{background:#d5f5e3;border-color:#27ae60;color:#1e8449;}
+.opt-btn.correct .opt-label{background:#27ae60;}
+.opt-btn.wrong{background:#fde8e8;border-color:#e74c3c;color:#c0392b;}
+.opt-btn.wrong .opt-label{background:#e74c3c;}
+.opt-btn.reveal{background:#d5f5e3;border-color:#27ae60;color:#1e8449;}
+.opt-btn.reveal .opt-label{background:#27ae60;}
+.opt-btn:disabled{cursor:default;}
+
+/* FEEDBACK */
+.feedback{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.7;display:none;}
+.feedback.show{display:block;}
+.feedback.correct{background:#eafaf1;border:1px solid #a9dfcc;color:#1e8449;}
+.feedback.wrong{background:#fdf2f2;border:1px solid #f5b7b1;color:#922b21;}
+.feedback.neutral{background:#eaf4fb;border:1px solid #aed6f1;color:#1a5276;}
+.feedback strong{font-weight:700;}
+
+/* ESSAY */
+.essay-card{background:white;border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-right:5px solid #f0d870;}
+.show-ans-btn{background:#1a5276;color:white;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .2s;}
+.show-ans-btn:hover{background:#2e86ab;}
+.ans-box{margin-top:12px;padding:14px;background:#f0f7ff;border-radius:8px;border-right:4px solid #2e86ab;font-size:14px;line-height:1.9;display:none;}
+.ans-box.show{display:block;}
+
+/* RESULT */
+.result-card{background:white;border-radius:12px;padding:30px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:16px;}
+.result-emoji{font-size:56px;margin-bottom:8px;}
+.result-score{font-size:42px;font-weight:700;color:#1a5276;}
+.result-pct{font-size:18px;color:#555;margin-top:4px;}
+.result-msg{font-size:15px;color:#2e86ab;font-weight:600;margin-top:8px;}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.result-item{background:#f0f7ff;border-radius:10px;padding:14px;}
+.result-item .rn{font-size:26px;font-weight:700;color:#1a5276;}
+.result-item .rl{font-size:12px;color:#666;margin-top:2px;}
+
+/* CONTROLS */
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:16px 0 24px;}
+.ctrl-btn{padding:10px 22px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;transition:all .2s;}
+.ctrl-btn.primary{background:#1a5276;color:white;}
+.ctrl-btn.primary:hover{background:#2e86ab;}
+.ctrl-btn.secondary{background:#e0e7ef;color:#1a5276;}
+.ctrl-btn.secondary:hover{background:#d0e2f7;}
+.ctrl-btn.green{background:#27ae60;color:white;}
+.ctrl-btn.green:hover{background:#229954;}
+
+@media(max-width:600px){.tab{padding:9px 12px;font-size:11px;}.header h1{font-size:18px;}.result-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎯 اختبار إدارة الفعاليات الرياضية والترويحية</h1>
+  <p>الماجستير التنفيذي في الإدارة الترويحية الرياضية 2026 — جامعة الملك سعود</p>
+  <div class="student">إعداد: عبدالعزيز الفهد</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('tf')">✅ صح وخطأ (20)</div>
+  <div class="tab" onclick="switchTab('mcq')">🎯 اختيار متعدد (20)</div>
+  <div class="tab" onclick="switchTab('essay')">✍️ مقالية (10)</div>
+  <div class="tab" onclick="switchTab('result')">📊 النتيجة</div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+<div class="container">
+
+<!-- صح وخطأ -->
+<div class="quiz-section active" id="section-tf">
+  <div class="score-bar">
+    <div><div class="score-num" id="tf-ans">0</div><div class="score-label">من 20 سؤال</div></div>
+    <div><div class="score-num" id="tf-cor" style="color:#27ae60">0</div><div class="score-label">إجابة صحيحة</div></div>
+    <div class="score-badge" id="tf-pct">0%</div>
+  </div>
+  <div id="tf-container"></div>
+  <div class="controls">
+    <button class="ctrl-btn secondary" onclick="showAllTF()">🔍 إظهار جميع الإجابات</button>
+    <button class="ctrl-btn secondary" onclick="resetTF()">🔄 إعادة</button>
+    <button class="ctrl-btn primary" onclick="switchTab('mcq')">التالي ←</button>
+  </div>
+</div>
+
+<!-- اختيار متعدد -->
+<div class="quiz-section" id="section-mcq">
+  <div class="score-bar">
+    <div><div class="score-num" id="mcq-ans">0</div><div class="score-label">من 20 سؤال</div></div>
+    <div><div class="score-num" id="mcq-cor" style="color:#27ae60">0</div><div class="score-label">إجابة صحيحة</div></div>
+    <div class="score-badge" id="mcq-pct">0%</div>
+  </div>
+  <div id="mcq-container"></div>
+  <div class="controls">
+    <button class="ctrl-btn secondary" onclick="showAllMCQ()">🔍 إظهار جميع الإجابات</button>
+    <button class="ctrl-btn secondary" onclick="resetMCQ()">🔄 إعادة</button>
+    <button class="ctrl-btn primary" onclick="switchTab('essay')">التالي ←</button>
+  </div>
+</div>
+
+<!-- مقالية -->
+<div class="quiz-section" id="section-essay">
+  <div id="essay-container"></div>
+  <div class="controls">
+    <button class="ctrl-btn green" onclick="switchTab('result')">📊 عرض النتيجة الكاملة</button>
+  </div>
+</div>
+
+<!-- النتيجة -->
+<div class="quiz-section" id="section-result">
+  <div class="result-card">
+    <div class="result-emoji" id="r-emoji">🏆</div>
+    <div class="result-score" id="r-score">-- / 40</div>
+    <div class="result-pct" id="r-pct">--</div>
+    <div class="result-msg" id="r-msg">أجب على الأسئلة أولاً</div>
+    <div class="result-grid">
+      <div class="result-item"><div class="rn" id="r-tf">--</div><div class="rl">صح وخطأ (من 20)</div></div>
+      <div class="result-item"><div class="rn" id="r-mcq">--</div><div class="rl">اختيار متعدد (من 20)</div></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="ctrl-btn secondary" onclick="resetAll()">🔄 إعادة الاختبار كاملاً</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===================== صح وخطأ =====================
+const tfData = [
+  {q:"الفعالية هي اجتماع مؤقت لتحقيق هدف محدد.", ans:true,
+   why:"✅ صحيح — هذا هو التعريف الأساسي للفعالية في المادة: اجتماع مؤقت لمجموعة أشخاص لتحقيق هدف معين."},
+  {q:"الخدمات المساعدة للفعاليات تشمل: الإضاءة والصوتيات والديكور والنقل والدعاية.",ans:true,
+   why:"✅ صحيح — هذه العناصر الخمسة هي تعريف الخدمات المساعدة حرفياً من المادة."},
+  {q:"Hallmark Events هي فعاليات تستهدف السوق المحلي فقط دون أي اهتمام دولي.",ans:false,
+   why:"❌ خطأ — Hallmark Events تجمع جمهوراً محلياً ودولياً معاً وتحصل على تغطية دولية كبيرة. أما المحلية فقط هي Local Events."},
+  {q:"اللقاءات الشبابية في تصنيف الفعاليات تستهدف الفئة العمرية من 15 إلى 35 سنة.",ans:true,
+   why:"✅ صحيح — هذا الرقم المحدد في المادة لتعريف اللقاءات الشبابية."},
+  {q:"أهمية الفعاليات وفق Allen & Otoole 2008 تشمل خمسة محاور رئيسية.",ans:false,
+   why:"❌ خطأ — أهمية الفعاليات وفق Allen & Otoole 2008 تشمل أربعة محاور فقط: دعم الاقتصاد، تعزيز صورة الهيئة، التعريف بالثقافة، تبادل الخبرات."},
+  {q:"وزارة الرياضة في المملكة أُسست عام 1394هـ/1974م وكانت تُعرف برئاسة الشباب.",ans:true,
+   why:"✅ صحيح — تأسست 1394هـ/1974م ثم أصبحت وزارة رسمية في 25 فبراير 2020م."},
+  {q:"الرؤية في مرحلة التصميم يجب أن تكون مفصلة وطويلة لتغطي جميع جوانب الفعالية.",ans:false,
+   why:"❌ خطأ — الرؤية يجب أن تكون موجزة وواضحة ومستقبلية وملهمة. الإطالة تتعارض مع مبدأ الإيجاز."},
+  {q:"الهوية البصرية للفعالية تشمل: الرسومات والعبارات والطباعة والألوان والصور.",ans:true,
+   why:"✅ صحيح — هذه العناصر الخمسة تكوّن الهوية البصرية للفعالية كما وردت في المادة."},
+  {q:"يجب الحصول على عرض سعر واحد فقط عند إعداد ميزانية الفعالية لتوفير الوقت.",ans:false,
+   why:"❌ خطأ — يجب الحصول على 3 عروض أسعار على الأقل لضمان أفضل سعر وجودة."},
+  {q:"مخطط جانت أداة بصرية تُستخدم لتتبع المهام والمواعيد الزمنية في التخطيط.",ans:true,
+   why:"✅ صحيح — مخطط جانت صممه هنري جانت وهو أداة أساسية في مرحلة التخطيط."},
+  {q:"منطقة التسجيل في الفعالية لا يمكن تحويلها إلى تطبيق ذكي أو موقع إلكتروني.",ans:false,
+   why:"❌ خطأ — المادة تنص صراحةً على أنه يُستحسن تحويل منطقة التسجيل إلى موقع إلكتروني أو تطبيق ذكي لتسريع الإجراءات."},
+  {q:"إدارة الحشود تُستخدم فقط في الفعاليات الكبيرة والضخمة.",ans:true,
+   why:"✅ صحيح — خطة إدارة الحشود مخصصة للفعاليات الكبيرة والضخمة التي تستقطب أعداداً كبيرة."},
+  {q:"التقييم النوعي للفعالية يعتمد على الأرقام والإحصائيات فقط.",ans:false,
+   why:"❌ خطأ — التقييم النوعي يعتمد على الجودة والتجربة كتفاعل الجمهور ونسبة التكرار. أما الأرقام فهي التقييم الكمي."},
+  {q:"لجنة الإعداد العلمي في المؤتمرات مسؤولة عن تحكيم الأوراق البحثية.",ans:true,
+   why:"✅ صحيح — من أبرز مهام لجنة الإعداد العلمي: وضع المحاور العلمية وتحكيم الأوراق البحثية."},
+  {q:"في دخول طابور الوفود بحفل الافتتاح تدخل الوفود حسب الترتيب الأبجدي بعد البلد المضيف.",ans:true,
+   why:"✅ صحيح — البلد المضيف أولاً ثم اللجنة التنظيمية ثم الوفود حسب الحروف الأبجدية."},
+  {q:"أهداف التدريب تشمل: زيادة الإنتاجية وتنمية القدرات وتغيير السلوك ومسايرة التقنية وإكساب الثقة.",ans:true,
+   why:"✅ صحيح — هذه الأهداف الخمسة للتدريب وردت حرفياً في المادة."},
+  {q:"الفعاليات الرسمية هي وسيلة لتبادل الآراء بعيداً عن التصرفات الرسمية.",ans:false,
+   why:"❌ خطأ — هذا تعريف الفعاليات غير الرسمية. أما الرسمية فتُعقد وفق إجراءات نظامية محددة في موعد وأسماء محددة."},
+  {q:"مهرجان الجنادرية أُسند إلى وزارة الثقافة عام 2019م.",ans:true,
+   why:"✅ صحيح — بعد أن كان تحت إشراف الحرس الوطني منذ تأسيسه 1405هـ/1985م."},
+  {q:"إدارة الأزمات تقوم على أربعة محاور: التنبؤ، الوقاية، السيناريوهات، التوعية والتدريب.",ans:true,
+   why:"✅ صحيح — هذه المحاور الأربعة هي ركائز إدارة الأزمات في الفعاليات."},
+  {q:"الخطأ الشائع في إدارة الفعاليات هو دمج المخططين مع المنفذين في نفس الفريق.",ans:false,
+   why:"❌ خطأ — الخطأ الشائع هو انفصال المخططين عن المنفذين وليس دمجهم. الدمج هو الممارسة الصحيحة لضمان التنفيذ الواقعي."},
+];
+
+// ===================== اختيار متعدد =====================
+const mcqData = [
+  {q:"ما تعريف منظم الفعاليات في المادة؟",
+   opts:["شخص يمتلك خبرة شخصية في التنظيم","مؤسسة مرخصة تمتشي مع معايير التصنيف","فرد متطوع يساعد في تنفيذ الفعاليات","شركة دعاية وإعلان متخصصة"],
+   ans:1, why:"الإجابة الصحيحة: <strong>مؤسسة مرخصة تمتشي مع معايير التصنيف</strong> — هذا التعريف الحرفي لمنظم الفعاليات في المادة."},
+  {q:"ما الفرق الرئيسي بين Mega Events وHallmark Events؟",
+   opts:["Mega أكبر حجماً وHallmark تعكس ثقافة الدولة","Mega محلية وHallmark دولية","Mega مجانية وHallmark مدفوعة","لا فرق بينهما"],
+   ans:0, why:"الإجابة: <strong>Mega أكبر حجماً وتستهدف السوق الدولي، بينما Hallmark انعكاس لثقافة الدولة المستضيفة</strong> ترمز لها."},
+  {q:"ما عدد عناصر الهوية البصرية للفعالية؟",
+   opts:["3 عناصر","4 عناصر","5 عناصر","6 عناصر"],
+   ans:2, why:"الإجابة: <strong>5 عناصر</strong> — الرسومات، العبارات والأرقام، الطباعة، لوحة الألوان، الصور."},
+  {q:"ما الأداة التحليلية التي تُستخدم لفهم العوامل الخارجية المؤثرة على الفعالية؟",
+   opts:["SWOT","SMART","PESTEL","Gantt"],
+   ans:2, why:"الإجابة: <strong>PESTEL</strong> — تحليل العوامل الخارجية: سياسية، اقتصادية، اجتماعية، تكنولوجية، بيئية، قانونية."},
+  {q:"ما الخطوة الأولى في تخطيط الموارد البشرية للفعالية؟",
+   opts:["كتابة الوصف الوظيفي","تحديد ميزانية الموارد البشرية","رسم الهيكل التنظيمي","اختيار فريق العمل"],
+   ans:1, why:"الإجابة: <strong>تحديد ميزانية الموارد البشرية</strong> — هي الخطوة الأولى إذ تحدد حجم الفريق والمهارات المطلوبة."},
+  {q:"كم عدد خطوات تصميم سمة الفعالية؟",
+   opts:["3 خطوات","4 خطوات","5 خطوات","6 خطوات"],
+   ans:2, why:"الإجابة: <strong>5 خطوات</strong> — معرفة أهداف الفعالية، رؤية الشركة، ثقافة الجمهور، التركيز على البساطة، تنفيذ السمة على كل أجزاء الموقع."},
+  {q:"أي الجهات لا تُذكر ضمن الجهات الواجب إبلاغها في إدارة الحشود؟",
+   opts:["إدارة المرور","الدفاع المدني","وزارة الاقتصاد","الهلال الأحمر"],
+   ans:2, why:"الإجابة: <strong>وزارة الاقتصاد</strong> — الجهات المذكورة في المادة هي: المرور، الدفاع المدني، الهلال الأحمر، الأمن العام، البلدية."},
+  {q:"ما المقصود بالتقييم الكمي للفعالية؟",
+   opts:["قياس رضا الجمهور وتفاعله","قياس الإيرادات وأعداد الزوار والمتابعين","قياس جودة التجربة العامة","قياس احترافية فريق العمل"],
+   ans:1, why:"الإجابة: <strong>قياس الإيرادات وأعداد الزوار والمتابعين</strong> — التقييم الكمي يعتمد على الأرقام والإحصائيات."},
+  {q:"ما عدد الخطوات الرئيسية في تنظيم الدورات الرياضية؟",
+   opts:["5 خطوات","6 خطوات","7 خطوات","8 خطوات"],
+   ans:2, why:"الإجابة: <strong>7 خطوات</strong> — تشكيل اللجنة العليا، تحديد الغرض، التخطيط، تنظيم العمل، الإعداد، الإقامة، التقويم."},
+  {q:"ما مهمة لجنة المراسم والتتويج في الدورات الرياضية؟",
+   opts:["الإعداد العلمي وتحكيم النتائج","تأمين الأعلام والميداليات والجوائز وبيان التتويج","إدارة الإعلام والتسويق","التنسيق مع الفنادق والنقل"],
+   ans:1, why:"الإجابة: <strong>تأمين أعلام الدول، الميداليات والجوائز، وإعداد بيان يومي بأسماء كبار الشخصيات الذين سيقومون بالتتويج</strong>."},
+  {q:"ما الفئة العمرية المستهدفة في اللقاءات الشبابية؟",
+   opts:["12-30 سنة","15-35 سنة","18-40 سنة","20-45 سنة"],
+   ans:1, why:"الإجابة: <strong>15-35 سنة</strong> — هذا التحديد الوارد في المادة لتعريف اللقاءات الشبابية."},
+  {q:"ما عدد أهداف وزارة الرياضة في المملكة العربية السعودية؟",
+   opts:["هدفان","ثلاثة أهداف","أربعة أهداف","خمسة أهداف"],
+   ans:2, why:"الإجابة: <strong>أربعة أهداف</strong> — زيادة الممارسة، رياضة تنافسية عالمياً، تطوير المنشآت، الاستدامة المالية."},
+  {q:"ما الخطأ الشائع المتعلق بالاجتماعات في إدارة الفعاليات؟",
+   opts:["عقد اجتماعات بدون جدول أعمال","تعدد الاجتماعات بلا مبرر","دعوة أشخاص غير متخصصين","عقد الاجتماعات عن بُعد"],
+   ans:1, why:"الإجابة: <strong>تعدد الاجتماعات بلا مبرر</strong> — يؤدي لغياب التنسيق وعدم انسجام الخطط."},
+  {q:"ما عدد أدوار الهيئة العامة للترفيه؟",
+   opts:["3 أدوار","4 أدوار","5 أدوار","6 أدوار"],
+   ans:2, why:"الإجابة: <strong>5 أدوار</strong> — ترفيه شامل، دعم الاقتصاد، دعم المنشآت الصغيرة، رفع الاستثمار الأجنبي، تحفيز القطاع الخاص."},
+  {q:"ما الذي يميز منطقة VIP عن غيرها من مناطق الفعالية؟",
+   opts:["أنها الأكبر مساحةً","توفير مدخل ومخرج خاص وخدمات متميزة وبروتوكول","أنها تستوعب أكبر عدد من الحضور","أنها مكان تسجيل الحضور"],
+   ans:1, why:"الإجابة: <strong>توفير مدخل ومخرج خاص وخدمات متميزة وموظفون ذوو مهارات الإتيكيت والبروتوكول</strong>."},
+  {q:"ما الفعالية التي دخلت موسوعة غينيس بمشاركة أكثر من 13 ألف هجن؟",
+   opts:["مهرجان الملك عبدالعزيز للإبل","مهرجان ولي العهد للهجن الثاني بالطائف","مهرجان الجنادرية","موسم الرياض"],
+   ans:1, why:"الإجابة: <strong>مهرجان ولي العهد للهجن الثاني بالطائف</strong> — دخل موسوعة غينيس بمشاركة أكثر من 13 ألف هجن."},
+  {q:"ما مرحلة إدارة الفعالية التي تُدمج فيها قائمة التحقق من 46 و65 عنصراً؟",
+   opts:["البحث","التخطيط","التنفيذ","التقييم"],
+   ans:3, why:"الإجابة: <strong>التقييم</strong> — قوائم التحقق أدوات تقييم تُطبق في المرحلة الخامسة لقياس جودة الفعالية."},
+  {q:"ما مراحل تنظيم الدورة التدريبية؟",
+   opts:["قبل وأثناء فقط","أثناء وبعد فقط","قبل وأثناء وبعد","قبل وبعد فقط"],
+   ans:2, why:"الإجابة: <strong>قبل وأثناء وبعد</strong> — ثلاث مراحل كاملة لتنظيم الدورة التدريبية بكل تفاصيلها."},
+  {q:"ما عدد مراحل إجراءات استضافة الفعاليات الدولية؟",
+   opts:["3 مراحل","4 مراحل","5 مراحل","6 مراحل"],
+   ans:1, why:"الإجابة: <strong>4 مراحل</strong> — تقديم ملف الترشح، التفتيش والتقييم، التصويت والمنح، التخطيط والتنفيذ."},
+  {q:"ما المبدأ الأول في إدارة الحشود؟",
+   opts:["إبلاغ الجهات الأمنية","تقييم المخاطر","اعرف جمهور فعاليتك","التخطيط المسبق الشامل"],
+   ans:2, why:"الإجابة: <strong>اعرف جمهور فعاليتك</strong> — هو المبدأ الأول لأن طبيعة الجمهور تحدد مستوى إدارة الحشود المطلوب."},
+];
+
+// ===================== مقالية =====================
+const essayData = [
+  {q:"اشرح مرحلة البحث في إدارة الفعاليات وأسبابها وأهميتها.",
+   ans:"<strong>مرحلة البحث هي أصعب المراحل</strong> وأهمها إذ تُحدد نجاح الفعالية من البداية. تعتمد على الإجابة عن الأسئلة الخمسة:<br>• <strong>Why:</strong> لماذا نقيم الفعالية؟ ما الهدف الحقيقي؟<br>• <strong>Who:</strong> من الجمهور المستهدف والرعاة والموردون؟<br>• <strong>What:</strong> ماذا تغطي الفعالية وما رسائلها؟<br>• <strong>Where:</strong> أين تُقام وهل المكان مجهز؟<br>• <strong>When:</strong> متى تقام وهل يتعارض مع فعاليات أخرى؟<br><strong>أهميتها:</strong> بدون بحث دقيق لا يمكن تصميم فعالية ناجحة — هي الأساس الذي تُبنى عليه بقية المراحل."},
+  {q:"اشرح الهوية البصرية للفعالية وعناصرها الخمسة وخطوات تصميم السمة.",
+   ans:"<strong>الهوية البصرية:</strong> كل ما يمكن للعملاء رؤيته شكلياً من الشعار إلى التصميم الداخلي.<br><strong>العناصر الخمسة:</strong><br>1. الرسومات: أصول صور مرسومة أو مصممة<br>2. العبارات والأرقام: الشعارات اللفظية<br>3. الطباعة: شكل النص المستخدم في الشعار<br>4. لوحة الألوان: لون أساسي وثانوي وتمييزي<br>5. الصور: محتوى التصوير الفوتوغرافي والفيديو<br><br><strong>خطوات تصميم السمة (5):</strong><br>1. معرفة أهداف الفعالية والغرض منها<br>2. معرفة رؤية الشركة المنظمة ورسالتها<br>3. فهم ثقافة الجمهور المستهدف<br>4. التركيز على البساطة<br>5. تنفيذ السمة على كل أجزاء الموقع"},
+  {q:"اشرح تحليل SWOT وكيف يُطبَّق في مرحلة تصميم الفعالية.",
+   ans:"<strong>SWOT</strong> أداة لتعريف التحديات والمخاطر قبل البدء في تصميم الحدث:<br>• <strong>S (Strengths):</strong> نقاط القوة الداخلية — شهرة الفعالية، دعم الرعاة، موقع مميز<br>• <strong>W (Weaknesses):</strong> نقاط الضعف الداخلية — نقص التمويل، قلة الخبرة<br>• <strong>O (Opportunities):</strong> الفرص الخارجية — اهتمام متزايد بالرياضة، أسواق جديدة<br>• <strong>T (Threats):</strong> التهديدات الخارجية — منافسة فعاليات أخرى، تقلبات اقتصادية<br><br><strong>التطبيق:</strong> يُستخدم في مرحلة التصميم قبل رسم الرؤية والهوية لضمان أن التصميم يعالج نقاط الضعف ويستغل الفرص ويتجنب التهديدات."},
+  {q:"ما أهداف وزارة الرياضة الأربعة وأدوار الهيئة العامة للترفيه الخمسة؟",
+   ans:"<strong>أهداف وزارة الرياضة (4):</strong><br>1. زيادة نسبة ممارسة الرياضة بين شرائح المجتمع<br>2. صناعة رياضة تنافسية على المستوى العالمي<br>3. تطوير المنشآت والمرافق الرياضية<br>4. تعزيز الاستدامة المالية للقطاع الرياضي<br><br><strong>أدوار الهيئة العامة للترفيه (5):</strong><br>1. توفير ترفيه شامل ومتنوع لجميع شرائح المجتمع<br>2. دعم الاقتصاد الوطني وتوليد فرص العمل<br>3. دعم المنشآت الصغيرة والمتوسطة في قطاع الترفيه<br>4. رفع نسبة الاستثمارات الأجنبية المباشرة<br>5. تحفيز القطاع الخاص على الاستثمار في الترفيه"},
+  {q:"اشرح لجان تنظيم الدورات الرياضية ومهمة كل لجنة.",
+   ans:"<strong>لجان الدورات الرياضية (6):</strong><br>1. <strong>اللجنة العليا ومدير البطولة:</strong> رسم السياسة العامة وإصدار القرارات — المدير يرفع تقريراً يومياً<br>2. <strong>لجنة الملاعب والأدوات:</strong> التأكد من صلاحية الأدوات وتجهيز غرف اللاعبين والحكام<br>3. <strong>لجنة الإعلام والتسويق:</strong> إصدار النشرات اليومية والتغطية الإعلامية والتسويق للرعاة<br>4. <strong>لجنة السكرتارية الفنية:</strong> الشهادات والميداليات والأرقام الصدرية للاعبين والتقرير العام<br>5. <strong>لجنة المراسم والتتويج:</strong> تأمين الأعلام والجوائز وبيان كبار الشخصيات للتتويج<br>6. <strong>لجنة العلاقات العامة والمواصلات:</strong> استقبال الوفود وتأمين النقل والتنسيق مع المستشفيات"},
+  {q:"اشرح بيئة التدريب وعناصرها الأربعة وكيفية إدارة بداية ونهاية الدورة التدريبية.",
+   ans:"<strong>بيئة التدريب — 4 عناصر:</strong><br>1. <strong>شكل الجلوس:</strong> يتيح اتصال النظر بين المشاركين ورؤية جيدة للمعينات<br>2. <strong>التهوية والإضاءة:</strong> جو مريح يعزز التركيز والمشاركة<br>3. <strong>الأجهزة التقنية:</strong> شاشة العرض والكمبيوتر والميكروفون<br>4. <strong>الملحقات:</strong> الأقلام والورق والمواد التدريبية<br><br><strong>إدارة بداية الدورة:</strong> تعارف ← تقديم الدورة ← الإجراءات الإدارية ← الارتياح والتهيئة<br><br><strong>إدارة نهاية الدورة:</strong> نشاط ختامي ← تقييم نهائي ← تقييم الدورة (جمع ردود فعل المتدربين)"},
+  {q:"ما مقومات نجاح الفعالية التسعة؟ وما معوقاتها؟",
+   ans:"<strong>مقومات النجاح (9):</strong><br>1. وضوح الهدف وتحديد الفئة المستهدفة<br>2. خطة علمية وجدول زمني دقيق<br>3. الوقت المناسب للمنظمين والمشاركين<br>4. المكان المناسب المجهز ماديًا<br>5. المرونة والاستجابة للمتغيرات<br>6. التنسيق الجيد بين الأعضاء<br>7. خبرة المنظم وكفاءة الفريق<br>8. التسويق الجيد والمبكر<br>9. توفير الراعي والأمان<br><br><strong>أبرز المعوقات (9):</strong> غياب المنظم المحترف، صعوبة التراخيص، سوء التوقيت، عدم ملاءمة التسهيلات، سوء اختيار الأعضاء، قلة وقت التخطيط، غياب التنسيق، غياب التقنية، سوء تقدير الحجم."},
+  {q:"اشرح المزيج التسويقي الرباعي 4P's وطريقة تطبيقه على الفعاليات.",
+   ans:"<strong>المزيج التسويقي 4P's للفعاليات:</strong><br><br>1. <strong>المنتج (Product):</strong> الفعالية ذاتها بمحتواها وأنشطتها وقيمتها المضافة. مثال: البطولة الرياضية منتجها المنافسة والإثارة.<br><br>2. <strong>السعر (Price):</strong> تكلفة الحضور مبنية على المصروفات والإيرادات وأسعار الفعاليات المشابهة والوضع الاقتصادي للشريحة المستهدفة.<br><br>3. <strong>المكان (Place):</strong> موقع الفعالية مع مراعاة سهولة الوصول وقربه من الجمهور ومزودي الخدمة ومكانته التسويقية.<br><br>4. <strong>الترويج (Promotion):</strong> يشمل الإعلان، العلاقات العامة، التسويق الرقمي عبر منصات التواصل، والمتحدثين الرسميين."},
+  {q:"اشرح فقرات حفل الافتتاح الرسمي للبطولات الرياضية بالترتيب الصحيح مع تفصيل كل فقرة.",
+   ans:"<strong>فقرات حفل الافتتاح الرسمي — 6 فقرات بالترتيب:</strong><br><br>1. <strong>عزف السلام الملكي:</strong> يُفتتح به الحفل رسمياً ويرمز للسيادة الوطنية.<br><br>2. <strong>دخول طابور عرض الوفود:</strong> البلد المضيف أولاً ثم اللجنة التنظيمية ثم الوفود حسب الترتيب الأبجدي، كل وفد خلف علمه وشعاره.<br><br>3. <strong>تلاوة آيات من الذكر الحكيم:</strong> تعكس الهوية الإسلامية والقيم الوطنية السعودية.<br><br>4. <strong>كلمات الترحيب الرسمية:</strong> كلمة رئيس الاتحاد المستضيف ثم رئيس اللجنة التنظيمية.<br><br>5. <strong>قسم البطولة ورفع العلم:</strong> يؤديه لاعب من المنتخب المضيف تعبيراً عن الروح الرياضية النظيفة.<br><br>6. <strong>إعلان الافتتاح الرسمي:</strong> من كبير المسؤولين أو راعي البطولة في الدولة المضيفة."},
+  {q:"اشرح إجراءات استضافة الفعاليات الدولية على مراحلها الأربع مع ربطها برؤية 2030.",
+   ans:"<strong>مراحل استضافة الفعاليات الدولية (4):</strong><br><br>1. <strong>تقديم ملف الترشح:</strong> يتضمن رؤية الدولة، الإمكانات، البنية التحتية، خطة التنظيم، الميزانية، الضمانات الحكومية.<br><br>2. <strong>التفتيش والتقييم الميداني:</strong> استقبال لجان التفتيش الدولية وإطلاعها على المنشآت والفنادق والبنية التحتية وتقديم العروض التقديمية.<br><br>3. <strong>التصويت ومنح الاستضافة:</strong> المشاركة في جلسات التصويت وتقديم الضمانات الحكومية والمالية للهيئة الدولية.<br><br>4. <strong>التخطيط والتنفيذ:</strong> بدء الاستعدادات الفعلية وفق الجداول المتفق عليها.<br><br><strong>الربط برؤية 2030:</strong> استضافة الفعاليات الدولية تُحقق أهداف رؤية 2030 في تنويع مصادر الدخل وتطوير قطاع السياحة وجعل المملكة وجهة عالمية."},
+];
+
+// ===================== متغيرات =====================
+let tfState = {answered:{}, correct:0};
+let mcqState = {answered:{}, correct:0};
+
+// ===================== TF =====================
+function renderTF(){
+  document.getElementById('tf-container').innerHTML = tfData.map((q,i)=>`
+    <div class="q-card" id="tfc-${i}">
+      <div class="q-num">سؤال ${i+1} من 20</div>
+      <div class="q-text">${q.q}</div>
+      <div class="tf-btns">
+        <button class="tf-btn t" onclick="doTF(${i},true)" id="tft-${i}">✅ صح</button>
+        <button class="tf-btn f" onclick="doTF(${i},false)" id="tff-${i}">❌ خطأ</button>
+      </div>
+      <div class="feedback" id="tffb-${i}"></div>
+    </div>`).join('');
+}
+function doTF(i,chosen){
+  if(tfState.answered[i]!==undefined)return;
+  tfState.answered[i]=chosen;
+  const q=tfData[i], ok=chosen===q.ans;
+  if(ok)tfState.correct++;
+  const tb=document.getElementById(`tft-${i}`), fb2=document.getElementById(`tff-${i}`);
+  tb.disabled=fb2.disabled=true;
+  if(chosen===true){tb.classList.add(ok?'sel-correct':'sel-wrong');if(!ok)fb2.classList.add('reveal');}
+  else{fb2.classList.add(ok?'sel-correct':'sel-wrong');if(!ok)tb.classList.add('reveal');}
+  const fb=document.getElementById(`tffb-${i}`);
+  fb.className=`feedback ${ok?'correct':'wrong'} show`;
+  fb.innerHTML=q.why;
+  document.getElementById(`tfc-${i}`).classList.add(ok?'correct':'wrong');
+  updateTF();
+}
+function updateTF(){
+  const t=Object.keys(tfState.answered).length;
+  document.getElementById('tf-ans').textContent=t;
+  document.getElementById('tf-cor').textContent=tfState.correct;
+  document.getElementById('tf-pct').textContent=t?Math.round(tfState.correct/t*100)+'%':'0%';
+  updateProgress();
+}
+function showAllTF(){
+  tfData.forEach((_,i)=>{
+    if(tfState.answered[i]!==undefined)return;
+    tfState.answered[i]=null;
+    const q=tfData[i];
+    const tb=document.getElementById(`tft-${i}`),fb2=document.getElementById(`tff-${i}`);
+    tb.disabled=fb2.disabled=true;
+    (q.ans?tb:fb2).classList.add('reveal');
+    const fb=document.getElementById(`tffb-${i}`);
+    fb.className='feedback neutral show';
+    fb.innerHTML='📌 '+q.why;
+  });
+  updateTF();
+}
+function resetTF(){tfState={answered:{},correct:0};updateTF();renderTF();}
+
+// ===================== MCQ =====================
+function renderMCQ(){
+  document.getElementById('mcq-container').innerHTML = mcqData.map((q,i)=>`
+    <div class="q-card" id="mcqc-${i}">
+      <div class="q-num">سؤال ${i+1} من 20</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">${q.opts.map((o,j)=>`
+        <button class="opt-btn" onclick="doMCQ(${i},${j})" id="mcqo-${i}-${j}">
+          <span class="opt-label">${['أ','ب','ج','د'][j]}</span>${o}
+        </button>`).join('')}
+      </div>
+      <div class="feedback" id="mcqfb-${i}"></div>
+    </div>`).join('');
+}
+function doMCQ(qi,chosen){
+  if(mcqState.answered[qi]!==undefined)return;
+  mcqState.answered[qi]=chosen;
+  const q=mcqData[qi], ok=chosen===q.ans;
+  if(ok)mcqState.correct++;
+  for(let j=0;j<q.opts.length;j++){
+    const b=document.getElementById(`mcqo-${qi}-${j}`);
+    b.disabled=true;
+    if(j===q.ans)b.classList.add(j===chosen?'correct':'reveal');
+    else if(j===chosen)b.classList.add('wrong');
+  }
+  const fb=document.getElementById(`mcqfb-${qi}`);
+  fb.className=`feedback ${ok?'correct':'wrong'} show`;
+  fb.innerHTML=q.why;
+  document.getElementById(`mcqc-${qi}`).classList.add(ok?'correct':'wrong');
+  updateMCQ();
+}
+function updateMCQ(){
+  const t=Object.keys(mcqState.answered).length;
+  document.getElementById('mcq-ans').textContent=t;
+  document.getElementById('mcq-cor').textContent=mcqState.correct;
+  document.getElementById('mcq-pct').textContent=t?Math.round(mcqState.correct/t*100)+'%':'0%';
+  updateProgress();
+}
+function showAllMCQ(){
+  mcqData.forEach((q,i)=>{
+    if(mcqState.answered[i]!==undefined)return;
+    mcqState.answered[i]=-1;
+    for(let j=0;j<q.opts.length;j++){
+      const b=document.getElementById(`mcqo-${i}-${j}`);
+      b.disabled=true;
+      if(j===q.ans)b.classList.add('reveal');
+    }
+    const fb=document.getElementById(`mcqfb-${i}`);
+    fb.className='feedback neutral show';
+    fb.innerHTML='📌 '+q.why;
+  });
+  updateMCQ();
+}
+function resetMCQ(){mcqState={answered:{},correct:0};updateMCQ();renderMCQ();}
+
+// ===================== ESSAY =====================
+function renderEssay(){
+  document.getElementById('essay-container').innerHTML = essayData.map((q,i)=>`
+    <div class="essay-card">
+      <div class="q-num">سؤال ${i+1} من 10</div>
+      <div class="q-text">${q.q}</div>
+      <button class="show-ans-btn" onclick="toggleEssay(${i})">📝 اضغط لعرض الإجابة النموذجية</button>
+      <div class="ans-box" id="eans-${i}">${q.ans}</div>
+    </div>`).join('');
+}
+function toggleEssay(i){
+  const b=document.getElementById(`eans-${i}`);
+  const btn=b.previousElementSibling;
+  b.classList.toggle('show');
+  btn.textContent=b.classList.contains('show')?'🔼 إخفاء الإجابة':'📝 اضغط لعرض الإجابة النموذجية';
+}
+
+// ===================== عام =====================
+function updateProgress(){
+  const t=Object.keys(tfState.answered).length+Object.keys(mcqState.answered).length;
+  document.getElementById('progress').style.width=Math.round(t/40*100)+'%';
+}
+function switchTab(tab){
+  document.querySelectorAll('.quiz-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('section-'+tab).classList.add('active');
+  ['tf','mcq','essay','result'].forEach((t,i)=>{if(t===tab)document.querySelectorAll('.tab')[i].classList.add('active');});
+  if(tab==='result')updateResult();
+  window.scrollTo(0,0);
+}
+function updateResult(){
+  const total=tfState.correct+mcqState.correct, max=40, pct=Math.round(total/max*100);
+  const emoji=pct>=90?'🏆':pct>=75?'⭐':pct>=60?'👍':'💪';
+  const msg=pct>=90?'ممتاز! أداء استثنائي':pct>=75?'جيد جداً — واصل':pct>=60?'جيد — تحتاج مراجعة بسيطة':'تحتاج مراجعة أكثر للمادة';
+  document.getElementById('r-emoji').textContent=emoji;
+  document.getElementById('r-score').textContent=`${total} / ${max}`;
+  document.getElementById('r-pct').textContent=`${pct}%`;
+  document.getElementById('r-msg').textContent=msg;
+  document.getElementById('r-tf').textContent=`${tfState.correct} / 20`;
+  document.getElementById('r-mcq').textContent=`${mcqState.correct} / 20`;
+}
+function resetAll(){
+  tfState={answered:{},correct:0};
+  mcqState={answered:{},correct:0};
+  updateTF();updateMCQ();
+  renderTF();renderMCQ();
+  switchTab('tf');
+}
+
+// INIT
+renderTF();renderMCQ();renderEssay();
+</script>
+</body>
+</html>
