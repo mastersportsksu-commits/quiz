@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختبار إدارة الفعاليات — عبدالعزيز الفهد</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f0f4f8;color:#1a202c;font-size:15px;line-height:1.8;}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#1a5276,#2e86ab);color:white;padding:30px 40px;text-align:center;}
+.header h1{font-size:26px;margin-bottom:6px;}
+.header p{font-size:13px;opacity:.8;}
+.header .student{margin-top:10px;background:rgba(255,255,255,.15);display:inline-block;padding:5px 20px;border-radius:20px;font-size:14px;}
+
+/* TABS */
+.tabs{background:#1a5276;display:flex;justify-content:center;gap:0;border-bottom:3px solid #2e86ab;}
+.tab{color:rgba(255,255,255,.7);padding:12px 28px;cursor:pointer;font-size:14px;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .2s;}
+.tab.active{color:white;border-bottom-color:#f0d870;}
+.tab:hover{color:white;background:rgba(255,255,255,.1);}
+
+/* PROGRESS */
+.progress-bar{background:#e0e7ef;height:6px;}
+.progress-fill{background:linear-gradient(90deg,#2e86ab,#27ae60);height:6px;transition:width .4s;}
+
+/* CONTAINER */
+.container{max-width:800px;margin:0 auto;padding:24px 20px;}
+
+/* SECTION */
+.quiz-section{display:none;}
+.quiz-section.active{display:block;}
+
+/* QUESTION CARD */
+.q-card{background:white;border-radius:12px;padding:22px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-right:5px solid #2e86ab;}
+.q-card.answered-correct{border-right-color:#27ae60;}
+.q-card.answered-wrong{border-right-color:#e74c3c;}
+.q-num{font-size:11px;color:#2e86ab;font-weight:700;margin-bottom:6px;text-transform:uppercase;}
+.q-text{font-size:15px;font-weight:600;color:#1a202c;margin-bottom:14px;line-height:1.7;}
+
+/* MCQ OPTIONS */
+.options{display:flex;flex-direction:column;gap:8px;}
+.opt-btn{background:#f8faff;border:2px solid #d0e2f7;border-radius:8px;padding:10px 16px;text-align:right;cursor:pointer;font-size:14px;font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#1a202c;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.opt-btn:hover:not(:disabled){background:#e8f0fb;border-color:#2e86ab;}
+.opt-btn .opt-label{background:#1a5276;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.opt-btn.correct{background:#d5f5e3;border-color:#27ae60;color:#1e8449;}
+.opt-btn.correct .opt-label{background:#27ae60;}
+.opt-btn.wrong{background:#fde8e8;border-color:#e74c3c;color:#c0392b;}
+.opt-btn.wrong .opt-label{background:#e74c3c;}
+.opt-btn.reveal{background:#d5f5e3;border-color:#27ae60;color:#1e8449;}
+.opt-btn.reveal .opt-label{background:#27ae60;}
+.opt-btn:disabled{cursor:default;}
+
+/* TF BUTTONS */
+.tf-btns{display:flex;gap:10px;}
+.tf-btn{flex:1;padding:10px;border:2px solid #d0e2f7;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;font-family:'Segoe UI',Tahoma,Arial,sans-serif;transition:all .2s;}
+.tf-btn.true-btn{background:#f0fdf4;color:#27ae60;}
+.tf-btn.false-btn{background:#fdf2f2;color:#e74c3c;}
+.tf-btn:hover:not(:disabled){opacity:.85;transform:translateY(-1px);}
+.tf-btn.selected-correct{background:#27ae60;color:white;border-color:#27ae60;}
+.tf-btn.selected-wrong{background:#e74c3c;color:white;border-color:#e74c3c;}
+.tf-btn.reveal-correct{background:#27ae60;color:white;border-color:#27ae60;}
+.tf-btn:disabled{cursor:default;}
+
+/* FEEDBACK */
+.feedback{margin-top:10px;padding:8px 12px;border-radius:6px;font-size:13px;display:none;}
+.feedback.show{display:block;}
+.feedback.correct{background:#d5f5e3;color:#1e8449;}
+.feedback.wrong{background:#fde8e8;color:#c0392b;}
+
+/* ESSAY */
+.essay-card{background:white;border-radius:12px;padding:22px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.essay-card .q-text{margin-bottom:12px;}
+.show-answer-btn{background:#1a5276;color:white;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Segoe UI',Tahoma,Arial,sans-serif;transition:all .2s;}
+.show-answer-btn:hover{background:#2e86ab;}
+.answer-box{margin-top:12px;padding:14px 16px;background:#f0f7ff;border-radius:8px;border-right:4px solid #2e86ab;font-size:14px;line-height:1.9;display:none;}
+.answer-box.show{display:block;}
+
+/* SCORE */
+.score-bar{background:white;border-radius:12px;padding:18px 22px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.score-num{font-size:28px;font-weight:700;color:#1a5276;}
+.score-label{font-size:13px;color:#555;}
+.score-badge{background:#1a5276;color:white;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;}
+
+/* CONTROLS */
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:20px 0;}
+.ctrl-btn{padding:10px 22px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;font-family:'Segoe UI',Tahoma,Arial,sans-serif;transition:all .2s;}
+.ctrl-btn.primary{background:#1a5276;color:white;}
+.ctrl-btn.primary:hover{background:#2e86ab;}
+.ctrl-btn.secondary{background:#e0e7ef;color:#1a5276;}
+.ctrl-btn.secondary:hover{background:#d0e2f7;}
+.ctrl-btn.success{background:#27ae60;color:white;}
+
+/* RESULT */
+.result-card{background:white;border-radius:12px;padding:30px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:20px;}
+.result-emoji{font-size:60px;margin-bottom:10px;}
+.result-score{font-size:40px;font-weight:700;color:#1a5276;}
+.result-label{font-size:16px;color:#555;margin-top:6px;}
+.result-detail{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.result-item{background:#f0f7ff;border-radius:8px;padding:12px;}
+.result-item .n{font-size:24px;font-weight:700;color:#1a5276;}
+.result-item .l{font-size:12px;color:#555;}
+
+@media(max-width:600px){.tab{padding:10px 14px;font-size:12px;}.header h1{font-size:20px;}.result-detail{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎯 اختبار إدارة الفعاليات الرياضية والترويحية</h1>
+  <p>الماجستير التنفيذي في الإدارة الترويحية الرياضية 2026 — جامعة الملك سعود</p>
+  <div class="student">إعداد: عبدالعزيز الفهد</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('tf')">✅ صح وخطأ <span id="tf-score-tab"></span></div>
+  <div class="tab" onclick="switchTab('mcq')">🎯 اختيار متعدد <span id="mcq-score-tab"></span></div>
+  <div class="tab" onclick="switchTab('essay')">✍️ مقالية</div>
+  <div class="tab" onclick="switchTab('result')">📊 النتيجة</div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+<div class="container">
+
+  <!-- صح وخطأ -->
+  <div class="quiz-section active" id="section-tf">
+    <div class="score-bar">
+      <div><div class="score-num" id="tf-current">0</div><div class="score-label">من 15 سؤال</div></div>
+      <div><div class="score-num" id="tf-correct-count" style="color:#27ae60">0</div><div class="score-label">إجابة صحيحة</div></div>
+      <div class="score-badge" id="tf-pct">0%</div>
+    </div>
+    <div id="tf-container"></div>
+    <div class="controls">
+      <button class="ctrl-btn secondary" onclick="showAllTF()">🔍 إظهار جميع الإجابات</button>
+      <button class="ctrl-btn secondary" onclick="resetTF()">🔄 إعادة</button>
+      <button class="ctrl-btn primary" onclick="switchTab('mcq')">التالي: اختيار متعدد ←</button>
+    </div>
+  </div>
+
+  <!-- اختيار متعدد -->
+  <div class="quiz-section" id="section-mcq">
+    <div class="score-bar">
+      <div><div class="score-num" id="mcq-current">0</div><div class="score-label">من 15 سؤال</div></div>
+      <div><div class="score-num" id="mcq-correct-count" style="color:#27ae60">0</div><div class="score-label">إجابة صحيحة</div></div>
+      <div class="score-badge" id="mcq-pct">0%</div>
+    </div>
+    <div id="mcq-container"></div>
+    <div class="controls">
+      <button class="ctrl-btn secondary" onclick="showAllMCQ()">🔍 إظهار جميع الإجابات</button>
+      <button class="ctrl-btn secondary" onclick="resetMCQ()">🔄 إعادة</button>
+      <button class="ctrl-btn primary" onclick="switchTab('essay')">التالي: المقالية ←</button>
+    </div>
+  </div>
+
+  <!-- مقالية -->
+  <div class="quiz-section" id="section-essay">
+    <div id="essay-container"></div>
+    <div class="controls">
+      <button class="ctrl-btn success" onclick="switchTab('result')">📊 عرض النتيجة الكاملة</button>
+    </div>
+  </div>
+
+  <!-- النتيجة -->
+  <div class="quiz-section" id="section-result">
+    <div class="result-card" id="result-card">
+      <div class="result-emoji" id="result-emoji">🏆</div>
+      <div class="result-score" id="result-score">--</div>
+      <div class="result-label" id="result-label">أجب على الأسئلة أولاً</div>
+      <div class="result-detail">
+        <div class="result-item"><div class="n" id="r-tf">--</div><div class="l">صح وخطأ (من 15)</div></div>
+        <div class="result-item"><div class="n" id="r-mcq">--</div><div class="l">اختيار متعدد (من 15)</div></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn secondary" onclick="resetAll()">🔄 إعادة الاختبار كاملاً</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==================== بيانات صح وخطأ ====================
+const tfData = [
+  {q:"تعريف إدارة الفعاليات وفق Yeoman 2009 هو: عملية منظمة تشمل الاختيار والتخطيط والتنفيذ والتقييم.", ans:true, exp:"صحيح — هذا التعريف الحرفي لـ Yeoman 2009:15"},
+  {q:"الهيئة العامة للترفيه تأسست في 12 مايو 2014م.", ans:false, exp:"خطأ — تأسست في 12 مايو 2016م (30 رجب 1437هـ)"},
+  {q:"مرحلة البحث هي أصعب مراحل إدارة الفعالية وفق منهجية جامعة جورج واشنطن.", ans:true, exp:"صحيح — مرحلة البحث هي الأصعب"},
+  {q:"التوزيع المعياري للميزانية: تسويق 30% + موقع 40% + مواد 30%.", ans:false, exp:"خطأ — الصحيح: تسويق 40% + موقع 30% + مواد 30%"},
+  {q:"أول من استخدم مصطلح SMART هو الدكتور جورج دوران.", ans:true, exp:"صحيح تماماً"},
+  {q:"الندوات تجمع من 12 إلى 200 شخص لمدة يوم أو يومين.", ans:false, exp:"خطأ — الصحيح من 12 إلى 150 شخص"},
+  {q:"هنري جانت هو مخترع مخطط جانت المستخدم في التخطيط الزمني للفعاليات.", ans:true, exp:"صحيح"},
+  {q:"وزارة الرياضة أصبحت وزارة رسمياً في 25 فبراير 2020م.", ans:true, exp:"صحيح — بمرسوم ملكي في 25 فبراير 2020م"},
+  {q:"معيار دورات المياه في الفعاليات هو دورة لكل 100 شخص.", ans:false, exp:"خطأ — الصحيح دورة لكل 50-75 شخصاً"},
+  {q:"العامل السياسي في PESTEL هو الأقوى تأثيراً في الفعاليات بالمملكة.", ans:true, exp:"صحيح — دعم القيادة السعودية هو الأقوى"},
+  {q:"مهرجان الملك عبدالعزيز للصقور دخل موسوعة غينيس 2018م بمشاركة 1723 صقراً.", ans:true, exp:"صحيح — في منطقة ملهم شمال الرياض"},
+  {q:"لجان إدارة المؤتمرات والندوات تبلغ 7 لجان.", ans:false, exp:"خطأ — الصحيح 9 لجان"},
+  {q:"أول فقرة في حفل الافتتاح الرسمي للبطولة هي تلاوة القرآن الكريم.", ans:false, exp:"خطأ — أول فقرة هي عزف السلام الملكي"},
+  {q:"ميزانية الطوارئ في الفعاليات تتراوح بين 5% و25%.", ans:true, exp:"صحيح"},
+  {q:"موسم الرياض انطلق في 11 أكتوبر 2019م بأكثر من 100 فعالية.", ans:true, exp:"صحيح"},
+];
+
+// ==================== بيانات MCQ ====================
+const mcqData = [
+  {q:"ما عدد مراحل إدارة الفعاليات وفق منهجية جامعة جورج واشنطن؟", opts:["3 مراحل","4 مراحل","5 مراحل","6 مراحل"], ans:2},
+  {q:"ما التوزيع المعياري الصحيح لميزانية الفعالية؟", opts:["تسويق 30%+ موقع 40%+ مواد 30%","تسويق 40%+ موقع 30%+ مواد 30%","تسويق 50%+ موقع 25%+ مواد 25%","تسويق 33%+ موقع 34%+ مواد 33%"], ans:1},
+  {q:"ما المنطقة التي تُعدّ المركز العصبي في تقسيم موقع الفعالية؟", opts:["الاستقبال","التسجيل","التحكم والسيطرة","VIP"], ans:2},
+  {q:"كم عدد لجان إدارة المؤتمرات والندوات؟", opts:["6 لجان","7 لجان","8 لجان","9 لجان"], ans:3},
+  {q:"كم عدد أهمية الفعاليات وفق Allen & Otoole 2008؟", opts:["ثلاث","أربع","خمس","ست"], ans:1},
+  {q:"متى تأسست الهيئة العامة للترفيه؟", opts:["12 مايو 2014م","12 مايو 2015م","12 مايو 2016م","12 مايو 2018م"], ans:2},
+  {q:"في قائمة التحقق من 46 عنصراً، ما النتيجة التي تدل على مستوى عالٍ؟", opts:["25 فأكثر","30 فأكثر","35 فأكثر","40 فأكثر"], ans:3},
+  {q:"ما أول فقرة في حفل الافتتاح الرسمي للبطولة؟", opts:["تلاوة القرآن الكريم","كلمات الترحيب","عزف السلام الملكي","دخول الوفود"], ans:2},
+  {q:"أول من استخدم مصطلح SMART؟", opts:["هنري جانت","ألن وأوتول","الدكتور جورج دوران","يومان"], ans:2},
+  {q:"ما عدد مسارح مهرجان MDL Beast؟", opts:["3","4","5","6"], ans:2},
+  {q:"كم معيار دورات المياه لكل عدد من الأشخاص؟", opts:["دورة لكل 25 شخص","دورة لكل 50-75 شخص","دورة لكل 100 شخص","دورة لكل 150 شخص"], ans:1},
+  {q:"ما أبرز مهارة في منظم الفعاليات الناجح؟", opts:["الإبداع والابتكار","شبكات العلاقات (Networking)","مهارات الاتصال","القيادة"], ans:1},
+  {q:"متى أصبحت رئاسة الشباب وزارة للرياضة؟", opts:["2018م","2019م","25 فبراير 2020م","2021م"], ans:2},
+  {q:"في قائمة 65 عنصراً، ما الدرجة التي تمثل مستوى ممتاز؟", opts:["48 فأكثر","53 فأكثر","58 فأكثر","63 فأكثر"], ans:2},
+  {q:"كم عدد فقرات حفل الافتتاح الرسمي للبطولات؟", opts:["4","5","6","7"], ans:2},
+];
+
+// ==================== بيانات المقالية ====================
+const essayData = [
+  {
+    q:"اشرح مراحل إدارة الفعالية الخمس وفق منهجية جامعة جورج واشنطن مع ذكر أهم تفاصيل كل مرحلة.",
+    ans:"<strong>1. البحث (الأصعب):</strong> الإجابة على أسئلة 5W's: Why, Who, What, Where, When. تحديد جدوى الفعالية وأبعادها.<br><strong>2. التصميم:</strong> كتابة الرؤية (موجزة، واضحة، مستقبلية، ملهمة) + الهوية البصرية (5 عناصر: رسومات، عبارات، طباعة، ألوان، صور) + سمة الفعالية (5 خطوات).<br><strong>3. التخطيط:</strong> الميزانية (تسويق 40%+ موقع 30%+ مواد 30%+ طوارئ 5%-25%) + الموارد البشرية + مخطط جانت + التسويق 4P's + ملف الرعاية.<br><strong>4. التنفيذ:</strong> تقسيم الموقع إلى 9 مناطق + إدارة الحشود (6 مبادئ) + التنسيق الميداني.<br><strong>5. التقييم:</strong> كمي (إيرادات، أعداد) + نوعي (تفاعل، تكرار) + قائمة 46 عنصراً + قائمة 65 عنصراً + 4 أنواع تقارير. التقييم يُدمج من أول خطوة."
+  },
+  {
+    q:"اذكر وشرح لجان إدارة المؤتمرات والندوات التسع مع ذكر مهمة رئيسية لكل لجنة.",
+    ans:"<strong>1. التنظيمية العليا:</strong> رسم السياسة العامة واعتماد الميزانية والقرارات الاستراتيجية.<br><strong>2. الإعداد العلمي:</strong> المحاور العلمية وتحكيم الأوراق البحثية وإعداد التقرير العلمي.<br><strong>3. السكرتارية والتنسيق:</strong> المراسلات والدعوات ودليل المؤتمر والترجمة الفورية.<br><strong>4. العلاقات العامة والضيافة:</strong> الترويج واستقبال المشاركين في المطارات والفنادق.<br><strong>5. الإعلامية والتسويقية:</strong> الخطة الإعلامية والبيانات الصحفية والبث المباشر.<br><strong>6. الاجتماعية والترفيهية:</strong> البرامج الاجتماعية والجولات السياحية وحفل الختام.<br><strong>7. المالية:</strong> الميزانية التفصيلية (+50 بنداً) والتقرير المالي الختامي.<br><strong>8. الفنية واللوجستية:</strong> الهوية البصرية والصوت والإضاءة وتجهيز القاعات.<br><strong>9. الأمن والسلامة:</strong> الخطة الأمنية وإجراءات الطوارئ والإخلاء والتنسيق مع الهلال الأحمر."
+  },
+  {
+    q:"اشرح تصنيفات الفعاليات (Mega, Hallmark, Regional, Local) مع الأسئلة الخمسة 5W's في مرحلة البحث.",
+    ans:"<strong>تصنيفات الفعاليات:</strong><br>• <strong>Mega Events:</strong> دولية ضخمة، عائد استثمار غير واضح، تغطية عالمية. مثال: كأس العالم، الأولمبياد.<br>• <strong>Hallmark Events:</strong> انعكاس لثقافة الدولة، جمهور محلي ودولي. مثال: الجنادرية.<br>• <strong>Regional Events:</strong> تخدم إقليماً معيناً، بعض التغطية الدولية. مثال: كأس الخليج.<br>• <strong>Local Events:</strong> تخدم المجتمع المحلي فقط. مثال: البازارات.<br><br><strong>الأسئلة الخمسة 5W's:</strong><br>• <strong>Why:</strong> لماذا نقيم الفعالية؟ ما الهدف الحقيقي؟<br>• <strong>Who:</strong> من الجمهور المستهدف والرعاة والموردون؟<br>• <strong>What:</strong> ماذا تغطي الفعالية وما رسائلها؟<br>• <strong>Where:</strong> أين تُقام وهل المكان مجهز بالإضاءة والصوتيات والمواقف؟<br>• <strong>When:</strong> متى تقام وهل يتعارض التوقيت مع أعياد أو فعاليات أخرى؟"
+  },
+  {
+    q:"اشرح تحليل SWOT وتحليل PESTEL وأهداف SMART مع التطبيق على الفعاليات في المملكة.",
+    ans:"<strong>SWOT:</strong> S=نقاط القوة الداخلية، W=نقاط الضعف الداخلية، O=الفرص الخارجية، T=التهديدات الخارجية. يُستخدم لتعريف التحديات قبل البدء في التصميم.<br><br><strong>PESTEL:</strong> P=السياسي (دعم القيادة — الأقوى)، E=الاقتصادي (رؤية 2030)، S=الاجتماعي (مشاركة المرأة)، T=التكنولوجي (تطبيقات ذكية)، E=البيئي (الطقس الحار)، L=القانوني (التراخيص).<br><br><strong>SMART (د. جورج دوران):</strong> S=محدد، M=قابل للقياس، A=قابل للتحقيق، R=ذو صلة، T=محدد بوقت. مثال تطبيقي: هدف جذب 5000 زائر لموسم الرياض خلال شهر أكتوبر بميزانية محددة."
+  },
+  {
+    q:"اذكر مقومات نجاح الفعاليات التسعة ومعوقاتها التسعة والأخطاء الشائعة الستة.",
+    ans:"<strong>مقومات النجاح (9):</strong> وضوح الهدف، خطة علمية وجدول زمني، الوقت المناسب، المكان المناسب، المرونة، التنسيق، خبرة المنظم، التسويق الجيد، توفير الراعي.<br><br><strong>معوقات النجاح (9):</strong> غياب المنظم المحترف، صعوبة التراخيص، سوء التوقيت، عدم ملاءمة التسهيلات، سوء اختيار الأعضاء، قلة وقت التخطيط، غياب التنسيق، غياب التقنية، سوء تقدير الحجم.<br><br><strong>الأخطاء الشائعة (6):</strong> الاعتماد الكلي على الخبراء الخارجيين، الاعتقاد بأن الجميع يقدر على الإدارة، تعدد الاجتماعات بلا مبرر، انفصال المخططين عن المنفذين، إهمال التجربة الفعلية، نسب الإنجازات للقائد."
+  },
+  {
+    q:"اشرح المزيج التسويقي 4P's وملف الرعاية وإدارة الحشود في الفعاليات.",
+    ans:"<strong>المزيج التسويقي 4P's:</strong><br>• Product: الفعالية ومحتواها وقيمتها المضافة.<br>• Price: تكلفة الحضور مبنية على الجوانب المالية وأسعار المنافسين.<br>• Place: الموقع وسهولة الوصول ومكانة الفعالية في السوق.<br>• Promotion: الإعلان والعلاقات العامة والتسويق الرقمي.<br><br><strong>ملف الرعاية — 6 خطوات:</strong> إبراز الهوية، تحديد التواريخ، وضع الشعار، كتابة الدعوة، سؤال تشويقي، عرض فوائد الرعاية.<br><br><strong>إدارة الحشود — 6 مبادئ:</strong> اعرف جمهورك، تخطيط مسبق شامل، إبلاغ الجهات (المرور، الدفاع المدني، الهلال الأحمر، الأمن العام، البلدية)، تقييم المخاطر، مراجعة خطة الطوارئ، اللوحات الإرشادية وتبسيط التسجيل (QR Code)."
+  },
+];
+
+// ==================== متغيرات الحالة ====================
+let tfAnswered = {}, tfCorrect = 0;
+let mcqAnswered = {}, mcqCorrect = 0;
+
+// ==================== دوال صح وخطأ ====================
+function renderTF() {
+  const c = document.getElementById('tf-container');
+  c.innerHTML = tfData.map((q,i) => `
+    <div class="q-card" id="tf-card-${i}">
+      <div class="q-num">سؤال ${i+1} من 15</div>
+      <div class="q-text">${q.q}</div>
+      <div class="tf-btns">
+        <button class="tf-btn true-btn" onclick="answerTF(${i},true)" id="tf-true-${i}">✅ صح</button>
+        <button class="tf-btn false-btn" onclick="answerTF(${i},false)" id="tf-false-${i}">❌ خطأ</button>
+      </div>
+      <div class="feedback" id="tf-fb-${i}"></div>
+    </div>
+  `).join('');
+}
+
+function answerTF(i, chosen) {
+  if (tfAnswered[i] !== undefined) return;
+  tfAnswered[i] = chosen;
+  const q = tfData[i];
+  const correct = chosen === q.ans;
+  if (correct) tfCorrect++;
+  const card = document.getElementById(`tf-card-${i}`);
+  const fb = document.getElementById(`tf-fb-${i}`);
+  const trueBtn = document.getElementById(`tf-true-${i}`);
+  const falseBtn = document.getElementById(`tf-false-${i}`);
+  trueBtn.disabled = falseBtn.disabled = true;
+  if (chosen === true) {
+    trueBtn.classList.add(correct ? 'selected-correct' : 'selected-wrong');
+    if (!correct) falseBtn.classList.add('reveal-correct');
+  } else {
+    falseBtn.classList.add(correct ? 'selected-correct' : 'selected-wrong');
+    if (!correct) trueBtn.classList.add('reveal-correct');
+  }
+  fb.className = `feedback ${correct?'correct':'wrong'} show`;
+  fb.innerHTML = correct ? `✅ إجابة صحيحة! — ${q.exp}` : `❌ إجابة خاطئة. ${q.exp}`;
+  card.classList.add(correct ? 'answered-correct' : 'answered-wrong');
+  updateTFScore();
+}
+
+function updateTFScore() {
+  const total = Object.keys(tfAnswered).length;
+  document.getElementById('tf-current').textContent = total;
+  document.getElementById('tf-correct-count').textContent = tfCorrect;
+  document.getElementById('tf-pct').textContent = total > 0 ? Math.round(tfCorrect/total*100)+'%' : '0%';
+  document.getElementById('tf-score-tab').textContent = total > 0 ? ` (${tfCorrect}/${total})` : '';
+  updateProgress();
+}
+
+function showAllTF() {
+  tfData.forEach((_,i) => { if (tfAnswered[i] === undefined) answerTF(i, null); });
+  tfData.forEach((q,i) => {
+    if (tfAnswered[i] === null) {
+      const fb = document.getElementById(`tf-fb-${i}`);
+      fb.className = 'feedback correct show';
+      fb.innerHTML = `📌 الإجابة: ${q.ans ? 'صح ✅' : 'خطأ ❌'} — ${q.exp}`;
+      if (q.ans) document.getElementById(`tf-true-${i}`).classList.add('reveal-correct');
+      else document.getElementById(`tf-false-${i}`).classList.add('reveal-correct');
+    }
+  });
+}
+
+function resetTF() {
+  tfAnswered = {}; tfCorrect = 0;
+  updateTFScore();
+  renderTF();
+}
+
+// ==================== دوال MCQ ====================
+function renderMCQ() {
+  const c = document.getElementById('mcq-container');
+  c.innerHTML = mcqData.map((q,i) => `
+    <div class="q-card" id="mcq-card-${i}">
+      <div class="q-num">سؤال ${i+1} من 15</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options" id="mcq-opts-${i}">
+        ${q.opts.map((o,j) => `
+          <button class="opt-btn" onclick="answerMCQ(${i},${j})" id="mcq-opt-${i}-${j}">
+            <span class="opt-label">${['أ','ب','ج','د'][j]}</span>
+            ${o}
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="mcq-fb-${i}"></div>
+    </div>
+  `).join('');
+}
+
+function answerMCQ(qi, chosen) {
+  if (mcqAnswered[qi] !== undefined) return;
+  mcqAnswered[qi] = chosen;
+  const q = mcqData[qi];
+  const correct = chosen === q.ans;
+  if (correct) mcqCorrect++;
+  const card = document.getElementById(`mcq-card-${qi}`);
+  const fb = document.getElementById(`mcq-fb-${qi}`);
+  for (let j = 0; j < q.opts.length; j++) {
+    const btn = document.getElementById(`mcq-opt-${qi}-${j}`);
+    btn.disabled = true;
+    if (j === q.ans) btn.classList.add(j === chosen ? 'correct' : 'reveal');
+    else if (j === chosen) btn.classList.add('wrong');
+  }
+  fb.className = `feedback ${correct?'correct':'wrong'} show`;
+  fb.innerHTML = correct ? `✅ إجابة صحيحة!` : `❌ خطأ. الإجابة الصحيحة: ${['أ','ب','ج','د'][q.ans]}. ${q.opts[q.ans]}`;
+  card.classList.add(correct ? 'answered-correct' : 'answered-wrong');
+  updateMCQScore();
+}
+
+function updateMCQScore() {
+  const total = Object.keys(mcqAnswered).length;
+  document.getElementById('mcq-current').textContent = total;
+  document.getElementById('mcq-correct-count').textContent = mcqCorrect;
+  document.getElementById('mcq-pct').textContent = total > 0 ? Math.round(mcqCorrect/total*100)+'%' : '0%';
+  document.getElementById('mcq-score-tab').textContent = total > 0 ? ` (${mcqCorrect}/${total})` : '';
+  updateProgress();
+}
+
+function showAllMCQ() {
+  mcqData.forEach((q,i) => {
+    if (mcqAnswered[i] !== undefined) return;
+    mcqAnswered[i] = -1;
+    for (let j = 0; j < q.opts.length; j++) {
+      const btn = document.getElementById(`mcq-opt-${i}-${j}`);
+      btn.disabled = true;
+      if (j === q.ans) btn.classList.add('reveal');
+    }
+    const fb = document.getElementById(`mcq-fb-${i}`);
+    fb.className = 'feedback correct show';
+    fb.innerHTML = `📌 الإجابة: ${['أ','ب','ج','د'][q.ans]}. ${q.opts[q.ans]}`;
+  });
+}
+
+function resetMCQ() {
+  mcqAnswered = {}; mcqCorrect = 0;
+  updateMCQScore();
+  renderMCQ();
+}
+
+// ==================== دوال المقالية ====================
+function renderEssay() {
+  const c = document.getElementById('essay-container');
+  c.innerHTML = essayData.map((q,i) => `
+    <div class="essay-card">
+      <div class="q-num">سؤال ${i+1} من 6</div>
+      <div class="q-text">${q.q}</div>
+      <button class="show-answer-btn" onclick="toggleAnswer(${i})">📝 اضغط لعرض الإجابة النموذجية</button>
+      <div class="answer-box" id="essay-ans-${i}">${q.ans}</div>
+    </div>
+  `).join('');
+}
+
+function toggleAnswer(i) {
+  const box = document.getElementById(`essay-ans-${i}`);
+  const btn = box.previousElementSibling;
+  if (box.classList.contains('show')) {
+    box.classList.remove('show');
+    btn.textContent = '📝 اضغط لعرض الإجابة النموذجية';
+  } else {
+    box.classList.add('show');
+    btn.textContent = '🔼 إخفاء الإجابة';
+  }
+}
+
+// ==================== دوال عامة ====================
+function updateProgress() {
+  const total = Object.keys(tfAnswered).length + Object.keys(mcqAnswered).length;
+  const pct = Math.round(total / 30 * 100);
+  document.getElementById('progress').style.width = pct + '%';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.quiz-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-'+tab).classList.add('active');
+  const tabs = ['tf','mcq','essay','result'];
+  document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active');
+  if (tab === 'result') updateResult();
+  window.scrollTo(0,0);
+}
+
+function updateResult() {
+  const total = tfCorrect + mcqCorrect;
+  const max = 30;
+  const pct = Math.round(total/max*100);
+  let emoji = pct >= 90 ? '🏆' : pct >= 75 ? '⭐' : pct >= 60 ? '👍' : '💪';
+  let label = pct >= 90 ? 'ممتاز! أداء رائع' : pct >= 75 ? 'جيد جداً' : pct >= 60 ? 'جيد — واصل' : 'تحتاج مراجعة أكثر';
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-score').textContent = `${total} / ${max}`;
+  document.getElementById('result-label').textContent = `${pct}% — ${label}`;
+  document.getElementById('r-tf').textContent = `${tfCorrect} / 15`;
+  document.getElementById('r-mcq').textContent = `${mcqCorrect} / 15`;
+}
+
+function resetAll() {
+  tfAnswered = {}; tfCorrect = 0;
+  mcqAnswered = {}; mcqCorrect = 0;
+  renderTF(); renderMCQ();
+  updateTFScore(); updateMCQScore();
+  switchTab('tf');
+}
+
+// INIT
+renderTF();
+renderMCQ();
+renderEssay();
+</script>
+</body>
+</html>
